@@ -1,310 +1,196 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargando...</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cargando...</title>
 
-        .holder {
-            position: fixed;
-            left: 0px;
-            top: 0px;
-            bottom: 0px;
-            right: 0px;
-            width: 100%;
-            height: 100%;
-            background-color: #1f1c1c;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        .preloader-container {
-            position: relative;
-            width: 250px;
-            height: 250px;
-            margin-bottom: 30px;
-        }
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
 
-        .preloader {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            animation: rotatePreloader 2s infinite ease-in;
-        }
+/* Fondo */
+.holder {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #2a2a2a, #0f0f0f);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 
-        .center-image {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            background: transparent;
-        }
+/* Escena */
+.spinner-scene {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    perspective: 900px;
+}
 
-        .center-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+/* ARO BASE 3D */
+.ring-back,
+.ring-front {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    transform-style: preserve-3d;
+    transform: rotateX(65deg);
+    animation: ring-wiggle 1.2s infinite ease-in-out,
+               ring-spin 1.2s linear infinite;
+}
 
-        @keyframes rotatePreloader {
-            0% {
-                transform: rotateZ(0deg);
-            }
-            100% {
-                transform: rotateZ(-360deg);
-            }
-        }
+/* ARO TRASERO */
+.ring-back {
+    z-index: 2;
+    background:
+        conic-gradient(
+            from 0deg,
+            rgba(255,255,255,.15),
+            rgba(255,255,255,.05),
+            rgba(255,255,255,.15)
+        );
+    mask: radial-gradient(circle, transparent 58%, black 60%);
+}
 
-        .preloader div {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-        }
+/* ARO FRONTAL */
+.ring-front {
+    z-index: 9;
+    background:
+        conic-gradient(
+            from 0deg,
+            #ff3838 0deg,
+            transparent 90deg,
+            #777d7e 180deg,
+            transparent 270deg,
+            #b31717 360deg
+        );
+    mask: radial-gradient(circle, transparent 58%, black 60%);
+    filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.7));
+}
 
-        .preloader div:before {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 0%;
-            width: 16px;
-            height: 16px;
-            background-color: #ffffff;
-            transform: translateX(-50%);
-            border-radius: 50%;
-        }
+/* LOGO TRASERO */
+.logo-back {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    mask: radial-gradient(circle, transparent 58%, black 60%);
+}
 
-        /* Animaciones para cada círculo */
-        .preloader div:nth-child(1) {
-            transform: rotateZ(0deg);
-            animation: rotateCircle1 2s infinite linear;
-            z-index: 9;
-        }
+.logo-back img {
+    width: 180px;
+    transform: translateY(6px);
+    opacity: .5;
+}
 
-        .preloader div:nth-child(2) {
-            transform: rotateZ(36deg);
-            animation: rotateCircle2 2s infinite linear;
-            z-index: 8;
-        }
+/* LOGO FRONTAL */
+.logo-front {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: logo-depth 1.2s infinite ease-in-out;
+}
 
-        .preloader div:nth-child(3) {
-            transform: rotateZ(72deg);
-            animation: rotateCircle3 2s infinite linear;
-            z-index: 7;
-        }
+.logo-front img {
+    width: 180px;
+    transform: translateY(10px);
+    filter: drop-shadow(0 14px 22px rgba(0,0,0,.75));
+}
 
-        .preloader div:nth-child(4) {
-            transform: rotateZ(108deg);
-            animation: rotateCircle4 2s infinite linear;
-            z-index: 6;
-        }
+/* TEXTO CARGANDO */
+.loading-text {
+    margin-top: 28px;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: #cfcfcf;
+    display: flex;
+    align-items: center;
+}
 
-        .preloader div:nth-child(5) {
-            transform: rotateZ(144deg);
-            animation: rotateCircle5 2s infinite linear;
-            z-index: 5;
-        }
+.loading-text span {
+    display: inline-block;
+    overflow: hidden;
+    width: 0;
+    animation: dots 1.6s steps(4, end) infinite;
+}
 
-        .preloader div:nth-child(6) {
-            transform: rotateZ(180deg);
-            animation: rotateCircle6 2s infinite linear;
-            z-index: 4;
-        }
+/* Animaciones */
+@keyframes ring-spin {
+    to { transform: rotateX(65deg) rotateZ(360deg); }
+}
 
-        .preloader div:nth-child(7) {
-            transform: rotateZ(216deg);
-            animation: rotateCircle7 2s infinite linear;
-            z-index: 3;
-        }
+@keyframes ring-wiggle {
+    0%   { transform: rotateX(65deg); }
+    50%  { transform: rotateX(69deg); }
+    100% { transform: rotateX(65deg); }
+}
 
-        .preloader div:nth-child(8) {
-            transform: rotateZ(252deg);
-            animation: rotateCircle8 2s infinite linear;
-            z-index: 2;
-        }
+@keyframes logo-depth {
+    0%   { opacity: 1; }
+    40%  { opacity: .35; }
+    60%  { opacity: .35; }
+    100% { opacity: 1; }
+}
 
-        .preloader div:nth-child(9) {
-            transform: rotateZ(288deg);
-            animation: rotateCircle9 2s infinite linear;
-            z-index: 1;
-        }
+@keyframes dots {
+    0%   { width: 0; }
+    100% { width: 1.5em; }
+}
 
-        .preloader div:nth-child(10) {
-            transform: rotateZ(324deg);
-            animation: rotateCircle10 2s infinite linear;
-            z-index: 0;
-        }
+/* Responsive */
+@media (max-width: 480px) {
+    .spinner-scene {
+        width: 200px;
+        height: 200px;
+    }
 
-        /* Definición de keyframes para cada círculo */
-        @keyframes rotateCircle1 {
-            0% { opacity: 0; }
-            5% { opacity: 1; transform: rotateZ(0deg); }
-            52% { transform: rotateZ(0deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle2 {
-            0% { opacity: 0; }
-            10% { opacity: 1; transform: rotateZ(-36deg); }
-            52% { transform: rotateZ(-36deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle3 {
-            0% { opacity: 0; }
-            15% { opacity: 1; transform: rotateZ(-72deg); }
-            52% { transform: rotateZ(-72deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle4 {
-            0% { opacity: 0; }
-            20% { opacity: 1; transform: rotateZ(-108deg); }
-            52% { transform: rotateZ(-108deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle5 {
-            0% { opacity: 0; }
-            25% { opacity: 1; transform: rotateZ(-144deg); }
-            52% { transform: rotateZ(-144deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle6 {
-            0% { opacity: 0; }
-            30% { opacity: 1; transform: rotateZ(-180deg); }
-            52% { transform: rotateZ(-180deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle7 {
-            0% { opacity: 0; }
-            35% { opacity: 1; transform: rotateZ(-216deg); }
-            52% { transform: rotateZ(-216deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle8 {
-            0% { opacity: 0; }
-            40% { opacity: 1; transform: rotateZ(-252deg); }
-            52% { transform: rotateZ(-252deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle9 {
-            0% { opacity: 0; }
-            45% { opacity: 1; transform: rotateZ(-288deg); }
-            52% { transform: rotateZ(-288deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        @keyframes rotateCircle10 {
-            0% { opacity: 0; }
-            50% { opacity: 1; transform: rotateZ(-324deg); }
-            52% { transform: rotateZ(-324deg); }
-            100% { transform: rotateZ(-324deg); opacity: 1; }
-        }
-
-        .loading-text {
-            color: white;
-            font-size: 1.3rem;
-            font-family: Arial, sans-serif;
-            margin-top: 25px;
-            text-align: center;
-        }
-
-        /* Responsive para celulares */
-        @media (max-width: 768px) {
-            .preloader-container {
-                width: 180px;
-                height: 180px;
-            }
-
-            .center-image {
-                width: 90px;
-                height: 90px;
-            }
-
-            .preloader div:before {
-                width: 14px;
-                height: 14px;
-            }
-
-            .loading-text {
-                font-size: 1.1rem;
-                margin-top: 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .preloader-container {
-                width: 150px;
-                height: 150px;
-            }
-
-            .center-image {
-                width: 70px;
-                height: 70px;
-            }
-
-            .preloader div:before {
-                width: 12px;
-                height: 12px;
-            }
-
-            .loading-text {
-                font-size: 1rem;
-                margin-top: 15px;
-            }
-        }
-    </style>
+    .logo-front img,
+    .logo-back img {
+        width: 130px;
+        height: 60px;
+    }
+}
+</style>
 </head>
 
 <body>
-    <div class="holder">
-        <div class="preloader-container">
-            <div class="preloader">
-                <div></div><div></div><div></div><div></div><div></div>
-                <div></div><div></div><div></div><div></div><div></div>
-            </div>
-            <div class="center-image">
-                <img src="public/images/logo.png" alt="Logo">
-            </div>
+
+<div class="holder">
+    <div class="spinner-scene">
+
+        <div class="ring-back"></div>
+
+        <div class="logo-back">
+            <img src="public/images/logo.png" alt="Logo">
         </div>
-        <div class="loading-text">Cargando...</div>
+
+        <div class="logo-front">
+            <img src="public/images/logo.png" alt="Logo">
+        </div>
+
+        <div class="ring-front"></div>
+
     </div>
 
-    <script>
-        // Ocultar el preloader cuando la página cargue
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.querySelector('.holder').style.display = 'none';
-                // Aquí puedes mostrar el contenido principal de tu página
-            }, 3000);
-        });
+    <div class="loading-text">
+        CARGANDO<span>...</span>
+    </div>
+</div>
 
-        // En caso de error al cargar la imagen
-        document.querySelector('.center-image img').addEventListener('error', function() {
-            console.log('Error al cargar la imagen del logo');
-        });
-    </script>
 </body>
 </html>

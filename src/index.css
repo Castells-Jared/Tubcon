@@ -14,9 +14,9 @@ body {
   padding-top: 80px;   /* espacio para el header fijo */
 }
 
-/* Header fijo */
+/* Header fijo - INICIA TRANSPARENTE */
 header {
-  background: #1f1c1c;
+  background: transparent;
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -29,6 +29,13 @@ header {
   left: 0;
   width: 100%;
   z-index: 1100;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Header con fondo cuando hay scroll */
+header.scrolled {
+  background: #1f1c1c;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .logo img {
@@ -54,6 +61,7 @@ header {
 .menu-desktop a {
   color: #fff;
   text-decoration: none;
+  transition: all 0.3s ease;
 }
 
 .menu-desktop a:hover {

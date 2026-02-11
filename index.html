@@ -15,23 +15,678 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- CSS CORREGIDO - SIDEBAR FUNCIONAL -->
+    <style>
+        /* ==================== */
+        /* RESET Y ESTILOS BASE */
+        /* ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <!-- CSS del Chatbot (externo) -->
-    <link rel="stylesheet" href="src/chatbot.css">
+        html {
+            scroll-behavior: smooth;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        body.menu-open {
+            overflow: hidden; /* Evitar scroll cuando el menú está abierto */
+        }
+
+        /* ==================== */
+        /* IMAGENES DE FONDO COMPLETO - FIJAS */
+        /* ==================== */
+        .fullscreen-carousel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .carousel-slides {
+            width: 100%;
+            height: 100%;
+        }
+
+        .carousel-slides img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .carousel-slides img.active {
+            opacity: 1;
+        }
+
+        /* Overlay oscuro para mejorar legibilidad */
+        .fullscreen-carousel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        /* ==================== */
+        /* HEADER - SEMI TRANSPARENTE */
+        /* ==================== */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(45, 45, 45, 0); /* Más visible */
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        /* Cuando hacemos scroll, hacerlo completamente sólido */
+        header.scrolled {
+            background: #2d2d2d;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 15px 40px;
+        }
+
+        /* Logo */
+        .logo img {
+            height: 40px;
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled .logo img {
+            height: 35px;
+        }
+
+        /* Menú desktop */
+        .menu-desktop ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .menu-desktop a {
+            color: white !important;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+            position: relative;
+            padding: 5px 0;
+        }
+
+        .menu-desktop a:hover {
+            color: #EF0315 !important;
+        }
+
+        .menu-desktop a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #EF0315;
+            transition: width 0.3s ease;
+        }
+
+        .menu-desktop a:hover::after {
+            width: 100%;
+        }
+
+        /* Botón hamburguesa - MEJOR VISIBILIDAD */
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: white !important;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 1001;
+            transition: color 0.3s ease;
+        }
+
+        .hamburger:hover {
+            color: #EF0315 !important;
+        }
+
+        /* ==================== */
+        /* CONTENIDO PRINCIPAL (secciones que aparecen al scroll) */
+        /* ==================== */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            background: white;
+            margin-top: 100vh; /* Empieza después de la pantalla completa */
+            min-height: 100vh;
+        }
+
+        /* SECCIÓN TEXTO SUPERPUESTO SOBRE LAS IMÁGENES */
+        .hero-text-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 900;
+            width: 90%;
+            max-width: 800px;
+            pointer-events: none;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            transition: all 0.5s ease;
+        }
+
+        .hero-text-overlay h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        .hero-text-overlay p {
+            font-size: 1.8rem;
+            font-weight: 300;
+        }
+
+        /* Flecha para scroll */
+        .scroll-indicator {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 950;
+            color: white;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+            pointer-events: all;
+            transition: all 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            40% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+            60% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+
+        /* ==================== */
+        /* SIDEBAR (MENÚ MÓVIL) - MEJORADO */
+        /* ==================== */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 15px rgba(0, 0, 0, 0);
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 25px;
+            overflow-y: auto;
+        }
+
+        #sidebar.active {
+            right: 0;
+        }
+
+        /* Overlay de fondo cuando el menú está abierto */
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar-logo {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .sidebar-logo img {
+            width: 150px;
+            height: auto;
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #333;
+            cursor: pointer;
+            padding: 5px;
+            margin-left: 15px;
+        }
+
+        .close-sidebar:hover {
+            color: #EF0315;
+        }
+
+        #sidebar ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #sidebar li {
+            margin-bottom: 10px;
+        }
+
+        #sidebar a {
+            color: #333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: block;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        #sidebar a:hover {
+            background: #f8f9fa;
+            color: #EF0315;
+            border-left-color: #EF0315;
+            padding-left: 20px;
+        }
+
+        #sidebar a[style*="color:#EF0315"] {
+            color: #EF0315 !important;
+            font-weight: 600;
+            border-left-color: #EF0315;
+            background: #fff5f5;
+        }
+
+        /* Estilos para la sección inferior del sidebar */
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .sidebar-bottom a {
+            display: block;
+            padding: 10px 0;
+            color: #333;
+            text-decoration: none;
+            border-left: none !important;
+            border-radius: 0;
+        }
+
+        .sidebar-bottom a:hover {
+            background: transparent;
+            color: #EF0315;
+            padding-left: 15px;
+        }
+
+        .sidebar-bottom a[style*="color: #EF0315"] {
+            color: #EF0315 !important;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-bottom a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ==================== */
+        /* CONTENIDO PRINCIPAL - SECCIONES */
+        /* ==================== */
+        .quick-icons-section {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .quick-icons-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .quick-icons-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .quick-icons-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+        }
+
+        .quick-icons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .quick-icon-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: block;
+        }
+
+        .quick-icon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #EF0315;
+        }
+
+        .quick-icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #EF0315;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 1.8rem;
+        }
+
+        /* ==================== */
+        /* PRODUCTOS DESTACADOS */
+        /* ==================== */
+        #productos-destacados {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #productos-destacados h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            color: #333;
+        }
+
+        .productos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .producto-card {
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .producto-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .producto-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .producto-info {
+            padding: 20px;
+        }
+
+        /* ==================== */
+        /* BOTONES DE ACCIÓN EN HERO */
+        /* ==================== */
+        .hero-buttons-container {
+            position: fixed;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 950;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 90%;
+            max-width: 800px;
+            pointer-events: all;
+            margin-top: 50px;
+        }
+
+        .hero-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .hero-button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border-color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ==================== */
+        /* FOOTER */
+        /* ==================== */
+        footer {
+            background: #2d2d2d;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        /* ==================== */
+        /* RESPONSIVE */
+        /* ==================== */
+        @media (max-width: 992px) {
+            .menu-desktop {
+                display: none;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .hero-text-overlay h1 {
+                font-size: 3rem;
+            }
+
+            .hero-text-overlay p {
+                font-size: 1.3rem;
+            }
+
+            .quick-icons-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-buttons-container {
+                top: 65%;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .hero-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            .hero-text-overlay h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-text-overlay p {
+                font-size: 1.2rem;
+            }
+
+            .quick-icons-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #sidebar {
+                width: 280px;
+                padding: 25px 20px;
+            }
+
+            .hero-buttons-container {
+                top: 70%;
+            }
+
+            .hero-button {
+                padding: 10px 25px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-text-overlay h1 {
+                font-size: 2rem;
+            }
+
+            .hero-text-overlay p {
+                font-size: 1.1rem;
+            }
+            
+            .scroll-indicator {
+                font-size: 1.5rem;
+            }
+            
+            #sidebar {
+                width: 85%;
+                max-width: 300px;
+            }
+
+            .hero-buttons-container {
+                top: 75%;
+                gap: 10px;
+            }
+
+            .hero-button {
+                padding: 8px 20px;
+                font-size: 0.9rem;
+                min-width: 150px;
+            }
+        }
+    </style>
 
 </head>
 
 <body>
-    <!-- PRELOADER EXTERNO -->
-    <div id="preloader-container">
+    <!-- PRELOADER -->
+    <div id="preloader-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999;">
         <iframe src="preloader.html" frameborder="0" style="width:100%; height:100%;"></iframe>
     </div>
     
-    <!-- HEADER -->
-    <header>
+    <!-- OVERLAY PARA EL SIDEBAR -->
+    <div id="sidebar-overlay"></div>
+    
+    <!-- CARRUSEL DE FONDO COMPLETO -->
+    <div class="fullscreen-carousel">
+        <div class="carousel-slides">
+            <img src="public/images/6.png" alt="Imagen 1" class="active" data-text="Expertos en plomería" data-button="Conoce nuestro catálogo" data-link="catalogo.html">
+            <img src="public/images/2.png" alt="Imagen 2" data-text="Soluciones integrales" data-button="Tenemos una gran variedad de productos" data-link="products.html">
+            <img src="public/images/3.png" alt="Imagen 3" data-text="Calidad garantizada" data-button="Solicita tu cotización" data-link="email.html">
+        </div>
+    </div>
+    
+    <!-- TEXTO SUPERPUESTO -->
+    <div class="hero-text-overlay">
+        <h1 id="hero-title">Expertos en plomería</h1>
+        <p id="hero-subtitle">Tubos, conexiones y accesorios de PVC</p>
+    </div>
+    
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="hero-buttons-container">
+        <a href="catalogo.html" class="hero-button" id="hero-button">Conoce nuestro catálogo</a>
+    </div>
+    
+    <!-- FLECHA PARA SCROLL -->
+    <div class="scroll-indicator" onclick="scrollToContent()">
+        <i class="fas fa-chevron-down"></i>
+    </div>
+    
+    <!-- HEADER - FIJO EN LA PARTE SUPERIOR -->
+    <header id="mainHeader">
         <div class="logo">
             <a href="index.html">
                 <img src="public/images/logo.png" class="logo" alt="TUBCON S.A. de C.V." />
@@ -40,337 +695,309 @@
 
         <nav class="menu-desktop">
             <ul>
-                <li><a href="index.html" style="color:#EF0315">Inicio</a></li>
-                <li><a href="#quienes-somos">¿Quiénes somos?</a></li>
+                <li><a href="index.html" style="color:#EF0315 !important;">Inicio</a></li>
                 <li><a href="products.html">Productos</a></li>
                 <li><a href="ubication.html">Instalaciones</a></li>
                 <li><a href="email.html">Asesoría</a></li>
-                <li><a href="brands.html">Distribuidores</a></li>
-                <li><a href="contact.html">Contacto</a></li>
+              
+                <li><a href="catalogo.html">Catalogo</a></li>
             </ul>
         </nav>
-        <button class="hamburger" id="hamburger">&#9776;</button>
-        <nav id="sidebar">
-            <button class="close" id="close">&times;</button>
+        
+        <!-- BOTÓN HAMBURGUESA -->
+        <button class="hamburger" id="hamburger">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
             <div class="sidebar-logo">
                 <img src="public/images/logo.png" alt="TUBCON S.A. de C.V.">
             </div>
-            <br><br>
-            <ul>
-                <li><a href="index.html" style="color:#EF0315">Inicio</a></li>
-                <li><a href="#quienes-somos">¿Quiénes somos?</a></li>
-                <li><a href="products.html">Productos</a></li>
-                <li><a href="ubication.html">Instalaciones</a></li>
-                <li><a href="email.html">Asesoría</a></li>
-                <li><a href="brands.html">Distribuidores</a></li>
-                <li><a href="contact.html">Contacto</a></li>
-            </ul>
-            <div class="sidebar-bottom">
-                <a href="https://www.google.com/maps?q=TUBCON%20SA%20DE%20CV" target="_blank">
-                    <i class="fa-solid fa-location-dot"></i> Dónde comprar
+            <button class="close-sidebar" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <ul>
+            <li><a href="index.html" style="color:#EF0315">Inicio</a></li>
+            <li><a href="products.html">Productos</a></li>
+            <li><a href="ubication.html">Instalaciones</a></li>
+            <li><a href="email.html">Asesoría</a></li>
+          
+            <li><a href="catalogo.html">Catalogo</a></li>
+        </ul>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL (aparece después de hacer scroll) -->
+    <div class="main-content">
+        <!-- SECCIÓN DE ICONOS RÁPIDOS -->
+        <section class="quick-icons-section" id="quick-icons">
+            <div class="quick-icons-container">
+                <h2 class="quick-icons-title">Acceso Rápido</h2>
+                <p class="quick-icons-subtitle">Encuentra lo que necesitas en un clic</p>
+                
+                <div class="quick-icons-grid">
+                    <!-- WhatsApp -->
+                    <a href="https://wa.me/525543225189" class="quick-icon-card" target="_blank">
+                        <div class="quick-icon-wrapper" style="background: #25D366;">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <h3>WhatsApp</h3>
+                        <p>Asesoría inmediata</p>
+                    </a>
+                    
+                    <!-- Teléfono -->
+                    <a href="tel:+525543225189" class="quick-icon-card">
+                        <div class="quick-icon-wrapper" style="background: #007bff;">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <h3>Llamar</h3>
+                        <p>55-43-22-51-89</p>
+                    </a>
+                    
+                    <!-- Ubicación -->
+                    <a href="ubication.html" class="quick-icon-card">
+                        <div class="quick-icon-wrapper" style="background: #17a2b8;">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Instalaciones</h3>
+                        <p>Visítanos</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRODUCTOS DESTACADOS -->
+        <section id="productos-destacados">
+            <h2>Secciones</h2>
+            <div class="productos-grid">
+                <!-- Productos -->
+                <a href="products.html" class="producto-card" style="text-decoration: none; color: inherit; display: block; position: relative; overflow: hidden; height: 400px; border-radius: 10px;">
+                    <!-- Parte superior con imagen -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 70%;">
+                        <img src="public/images/iconos/1.png" alt="Tubos PVC" 
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    
+                    <!-- Parte inferior con contenido -->
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 30%; background: white; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 10px; color: #333;">Productos</h3>
+                        <p style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; color: #666;">
+                            Descubre nuestra variedad de productos...
+                        </p>
+                        <span class="ver-mas" style="color: #EF0315; font-weight: bold; font-size: 1rem;">
+                            Ver más →
+                        </span>
+                    </div>
                 </a>
-                <a href="#">Sé un distribuidor TUBCON</a>
-                <a href="https://wa.me/5543225189" target="_blank">
-                    <i class="fa-solid fa-phone"></i> 55-43-22-51-89
+
+                <!-- Cotización -->
+                <a href="email.html" class="producto-card" style="text-decoration: none; color: inherit; display: block; position: relative; overflow: hidden; height: 400px; border-radius: 10px;">
+                    <!-- Parte superior con imagen -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 70%;">
+                        <img src="public/images/iconos/2.png" alt="Tubos PVC" 
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    
+                    <!-- Parte inferior con contenido -->
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 30%; background: white; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 10px; color: #333;">Cotización</h3>
+                        <p style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; color: #666;">
+                            Solicita tu cotización personalizada...
+                        </p>
+                        <span class="ver-mas" style="color: #EF0315; font-weight: bold; font-size: 1rem;">
+                            Ver más →
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Catálogo -->
+                <a href="catalogo.html" class="producto-card" style="text-decoration: none; color: inherit; display: block; position: relative; overflow: hidden; height: 400px; border-radius: 10px;">
+                    <!-- Parte superior con imagen -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 70%;">
+                        <img src="public/images/iconos/3.png" alt="Tubos PVC" 
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    
+                    <!-- Parte inferior con contenido -->
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 30%; background: white; padding: 20px; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="font-size: 1.5rem; margin-bottom: 10px; color: #333;">Catálogo</h3>
+                        <p style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; color: #666;">
+                            Conoce nuestro catálogo completo de productos y servicios...
+                        </p>
+                        <span class="ver-mas" style="color: #EF0315; font-weight: bold; font-size: 1rem;">
+                            Ver más →
+                        </span>
+                    </div>
                 </a>
             </div>
-        </nav>
-    </header>
+        </section>
 
-    <!-- HERO -->
-    <section id="inicio" class="hero">
-        <div class="carousel">
-            <div class="slides">
-                <img src="public/images/fondo.png" alt="Imagen 1">
-                <img src="public/images/fondo2.jpg" alt="Imagen 2">
-                <img src="public/images/fondo3.jpg" alt="Imagen 3">
-            </div>
-        </div>
-        <div class="hero-text">
-            <h1>Expertos en plomería</h1>
-            <p>Tubos, conexiones y accesorios de PVC</p>
-        </div>
-    </section>
-
-    <!-- QUIÉNES SOMOS -->
-    <section id="quienes-somos">
-        <h2>¿Quiénes somos?</h2>
-        <p>Tubcon es una empresa enfocada principalmente a la distribución de mayoreo de material de plomería en general
-            trabajando principalmente con las mejores marcas del mercado, comprando la mayoría de sus productos directo
-            de fábrica, satisfaciendo así al público en general, mayoristas y constructores con los mejores precios del
-            mercado.</p>
-    </section>
-
-    <!-- MISIÓN VISIÓN -->
-    <section id="mision-vision">
-        <div class="grid">
-            <div class="item">
-                <h2>Misión</h2>
-                <h3>Comercializar productos con marcadas especificaciones técnicas para uso industrial que combinados
-                    con el desarrollo de ingeniería, tecnología y servicio postventa satisfacen necesidades de nuestros
-                    clientes, asegurando el crecimiento de la empresa, los utilidades de los accionistas y la calidad de
-                    vida de los miembros de la organización.</h3>
-            </div>
-            <div class="item">
-                <h2>Visión</h2>
-                <h3>Consolidar nuestra EMPRESA en la industria y el comercio, contando con un talento humano competente
-                    que promueve el desarrollo y crecimiento de la organización organizando la excelente relación con
-                    nuestros clientes y proveedores.</h3>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer>
-        <p>© 2025 TUBCON S.A. de C.V. </p>
-    
-    </footer>
-
-    <div id="overlay"></div>
-
-    <!-- CHATBOT DESKTOP -->
-    <div class="chatbot-container" id="desktopChatbot">
-        <div class="chatbot-header" id="chatbotToggle">
-            <span>Asistente TUBCON</span>
-            <i class="fas fa-robot"></i>
-        </div>
-        <div class="chatbot-body" id="chatbotBody">
-            <div class="chatbot-messages" id="chatbotMessages"></div>
-            <div class="chatbot-input">
-                <input type="text" id="userInput" placeholder="Escribe tu pregunta...">
-                <button id="sendButton"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <!-- CHATBOT MÓVIL -->
-    <div class="chatbot-bubble" id="mobileChatbotBubble">
-        <i class="fas fa-comment"></i>
-    </div>
-
-    <div class="chatbot-mobile-window" id="mobileChatbotWindow">
-        <div class="chatbot-header">
-            <span>Asistente TUBCON</span>
-            <button class="close-chat" id="closeMobileChat">×</button>
-        </div>
-        <div class="chatbot-messages" id="mobileChatbotMessages"></div>
-        <div class="chatbot-input">
-            <input type="text" id="mobileUserInput" placeholder="Escribe tu pregunta...">
-            <button id="mobileSendButton"><i class="fas fa-paper-plane"></i></button>
-        </div>
-    </div>
-
-    <!-- WHATSAPP FLOAT -->
-    <div class="whatsapp-float" id="whatsappFloat">
-        <a href="https://wa.me/525543225189" id="whatsappLink" target="_blank">
-            <i class="fab fa-whatsapp"></i>
-        </a>
-        <div class="whatsapp-tooltip">
-            ¿Necesitas ayuda?
-        </div>
+        <!-- FOOTER -->
+        <footer>
+            <p>© 2025 TUBCON S.A. de C.V. Todos los derechos reservados.</p>
+        </footer>
     </div>
 
     <!-- SCRIPTS -->
-    <!-- Menú móvil -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const header = document.getElementById('mainHeader');
+            const heroTitle = document.getElementById('hero-title');
+            const heroSubtitle = document.getElementById('hero-subtitle');
+            const heroButton = document.getElementById('hero-button');
+            const scrollIndicator = document.querySelector('.scroll-indicator');
             const hamburger = document.getElementById('hamburger');
+            const closeSidebar = document.getElementById('closeSidebar');
             const sidebar = document.getElementById('sidebar');
-            const closeBtn = document.getElementById('close');
-            const overlay = document.getElementById('overlay');
-            hamburger.addEventListener('click', function () {
-                sidebar.classList.add('active');
-                overlay.classList.add('active');
-                document.body.classList.add('menu-active');
-                document.body.style.overflow = 'hidden';
-            });
-            closeBtn.addEventListener('click', closeMenu);
-            overlay.addEventListener('click', closeMenu);
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') closeMenu();
-            });
-            function closeMenu() {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                document.body.classList.remove('menu-active');
-                document.body.style.overflow = '';
-            }
-        });
-    </script>
-
-    <!-- Chatbot -->
-    <script type="module">
-        import { knowledgeBase, procesarMensaje } from './chatbot.js';
-        let isDesktopChatOpen = false;
-        let isMobileChatOpen = false;
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const saludoAleatorio = knowledgeBase.saludos[
-                Math.floor(Math.random() * knowledgeBase.saludos.length)
-            ];
-            const mensajeDivDesktop = document.createElement('div');
-            mensajeDivDesktop.className = 'message bot-message';
-            mensajeDivDesktop.textContent = saludoAleatorio;
-            document.getElementById('chatbotMessages').appendChild(mensajeDivDesktop);
-            const mensajeDivMobile = document.createElement('div');
-            mensajeDivMobile.className = 'message bot-message';
-            mensajeDivMobile.textContent = saludoAleatorio;
-            document.getElementById('mobileChatbotMessages').appendChild(mensajeDivMobile);
-            document.getElementById('chatbotToggle').addEventListener('click', toggleDesktopChat);
-            document.getElementById('sendButton').addEventListener('click', function () {
-                sendMessage('userInput', 'chatbotMessages');
-            });
-            document.getElementById('userInput').addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') sendMessage('userInput', 'chatbotMessages');
-            });
-            document.getElementById('mobileSendButton').addEventListener('click', function () {
-                sendMessage('mobileUserInput', 'mobileChatbotMessages');
-            });
-            document.getElementById('mobileUserInput').addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') sendMessage('mobileUserInput', 'mobileChatbotMessages');
-            });
-            const whatsappLink = document.getElementById('whatsappLink');
-            const isMobile = window.innerWidth <= 768;
-            whatsappLink.href = isMobile
-                ? "https://wa.me/525543225189"
-                : "https://web.whatsapp.com/send?phone=525543225189";
-        });
-
-        function toggleDesktopChat() {
-            const chatBody = document.getElementById('chatbotBody');
-            isDesktopChatOpen = !isDesktopChatOpen;
-            if (isDesktopChatOpen) {
-                chatBody.classList.add('active');
-                if (window.innerWidth > 768) {
-                    document.getElementById('whatsappFloat').classList.add('hidden');
-                }
-                setTimeout(() => {
-                    const messages = document.getElementById('chatbotMessages');
-                    messages.scrollTop = messages.scrollHeight;
-                }, 300);
-            } else {
-                chatBody.classList.remove('active');
-                if (window.innerWidth > 768) {
-                    document.getElementById('whatsappFloat').classList.remove('hidden');
-                }
-            }
-        }
-
-        async function sendMessage(inputId, messagesId) {
-            const userInput = document.getElementById(inputId);
-            const messageText = userInput.value.trim();
-            if (!messageText) return;
-            const userMessageDiv = document.createElement('div');
-            userMessageDiv.className = 'message user-message';
-            userMessageDiv.textContent = messageText;
-            document.getElementById(messagesId).appendChild(userMessageDiv);
-            userInput.value = '';
-            userInput.focus();
-            const messages = document.getElementById(messagesId);
-            messages.scrollTop = messages.scrollHeight;
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message bot-message typing-indicator';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            messages.appendChild(typingDiv);
-            messages.scrollTop = messages.scrollHeight;
-            try {
-                const respuesta = await procesarMensaje(messageText);
-                const typingIndicator = messages.querySelector('.typing-indicator');
-                if (typingIndicator) typingIndicator.remove();
-                appendBotMessage(respuesta, messagesId);
-            } catch (error) {
-                console.error("Error procesando mensaje:", error);
-                const typingIndicator = messages.querySelector('.typing-indicator');
-                if (typingIndicator) typingIndicator.remove();
-                appendBotMessage("No pude procesar tu solicitud en este momento. ¿Podrías intentarlo de nuevo?", messagesId);
-            }
-        }
-
-        function appendBotMessage(message, messagesId) {
-            const botMessageDiv = document.createElement('div');
-            botMessageDiv.className = 'message bot-message';
-            botMessageDiv.innerHTML = message;
-            document.getElementById(messagesId).appendChild(botMessageDiv);
-            const messages = document.getElementById(messagesId);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        const mobileBubble = document.getElementById('mobileChatbotBubble');
-        const mobileWindow = document.getElementById('mobileChatbotWindow');
-        const closeMobile = document.getElementById('closeMobileChat');
-        if (mobileBubble && mobileWindow && closeMobile) {
-            mobileBubble.addEventListener('click', function () {
-                isMobileChatOpen = true;
-                mobileWindow.classList.add('active');
-                document.body.classList.add('chatbot-active');
-                document.body.style.overflow = 'hidden';
-                mobileBubble.classList.add('hidden');
-            });
-            closeMobile.addEventListener('click', function () {
-                isMobileChatOpen = false;
-                mobileWindow.classList.remove('active');
-                document.body.classList.remove('chatbot-active');
-                document.body.style.overflow = '';
-                mobileBubble.classList.remove('hidden');
-            });
-            let startY = 0;
-            mobileWindow.addEventListener('touchstart', function (e) {
-                startY = e.touches[0].clientY;
-            });
-            mobileWindow.addEventListener('touchmove', function (e) {
-                const currentY = e.touches[0].clientY;
-                if (currentY - startY > 100) {
-                    isMobileChatOpen = false;
-                    mobileWindow.classList.remove('active');
-                    document.body.classList.remove('chatbot-active');
-                    document.body.style.overflow = '';
-                    mobileBubble.classList.remove('hidden');
-                }
-            });
-        }
-
-        window.addEventListener('resize', function () {
-            const whatsappLink = document.getElementById('whatsappLink');
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                whatsappLink.href = "https://wa.me/525543225189";
-                document.getElementById('whatsappFloat').classList.remove('hidden');
-                if (isMobileChatOpen) {
-                    document.getElementById('mobileChatbotBubble').classList.add('hidden');
-                } else {
-                    document.getElementById('mobileChatbotBubble').classList.remove('hidden');
-                }
-            } else {
-                whatsappLink.href = "https://web.whatsapp.com/send?phone=525543225189";
-                if (isDesktopChatOpen) {
-                    document.getElementById('whatsappFloat').classList.add('hidden');
-                } else {
-                    document.getElementById('whatsappFloat').classList.remove('hidden');
-                }
-                document.getElementById('mobileChatbotBubble').classList.add('hidden');
-            }
-        });
-    </script>
-
-
-
-
-
-
-    <!-- Script para ocultar preloader -->
-    <script>
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                const preloader = document.getElementById('preloader-container');
-                preloader.classList.add('fade-out');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const body = document.body;
+            
+            // Inicializar header con transparencia
+            header.classList.remove('scrolled');
+            
+            // Manejar el scroll
+            function handleScroll() {
+                const scrollPosition = window.scrollY;
+                const viewportHeight = window.innerHeight;
                 
+                // Cambiar header cuando se hace scroll
+                if (scrollPosition > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+                
+                // Efecto de desvanecimiento para el texto, botón y flecha cuando se hace scroll
+                if (scrollPosition > 100) {
+                    const opacity = Math.max(0, 1 - (scrollPosition / (viewportHeight * 0.5)));
+                    heroTitle.parentElement.style.opacity = opacity;
+                    heroButton.parentElement.style.opacity = opacity;
+                    scrollIndicator.style.opacity = opacity;
+                    
+                    // Ocultar completamente cuando se sale de la vista
+                    if (scrollPosition > viewportHeight * 0.8) {
+                        heroTitle.parentElement.style.display = 'none';
+                        heroButton.parentElement.style.display = 'none';
+                        scrollIndicator.style.display = 'none';
+                    } else {
+                        heroTitle.parentElement.style.display = 'block';
+                        heroButton.parentElement.style.display = 'flex';
+                        scrollIndicator.style.display = 'block';
+                    }
+                } else {
+                    heroTitle.parentElement.style.opacity = '1';
+                    heroButton.parentElement.style.opacity = '1';
+                    scrollIndicator.style.opacity = '1';
+                    heroTitle.parentElement.style.display = 'block';
+                    heroButton.parentElement.style.display = 'flex';
+                    scrollIndicator.style.display = 'block';
+                }
+            }
+            
+            // Escuchar eventos de scroll
+            window.addEventListener('scroll', handleScroll);
+            handleScroll(); // Verificar estado inicial
+            
+            // FUNCIONALIDAD DEL MENÚ MÓVIL
+            function openSidebar() {
+                sidebar.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                body.classList.add('menu-open');
+            }
+            
+            function closeSidebarFunc() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                body.classList.remove('menu-open');
+            }
+            
+            // Abrir menú
+            hamburger.addEventListener('click', openSidebar);
+            
+            // Cerrar menú con botón X
+            closeSidebar.addEventListener('click', closeSidebarFunc);
+            
+            // Cerrar menú al hacer clic en overlay
+            sidebarOverlay.addEventListener('click', closeSidebarFunc);
+            
+            // Cerrar menú al hacer clic en un enlace del sidebar
+            document.querySelectorAll('#sidebar a').forEach(link => {
+                link.addEventListener('click', closeSidebarFunc);
+            });
+            
+            // Cerrar menú con tecla ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeSidebarFunc();
+                }
+            });
+            
+            // CARRUSEL AUTOMÁTICO CON CAMBIO DE TEXTO Y BOTÓN
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.carousel-slides img');
+            
+            function showSlide(index) {
+                // Ocultar todas las imágenes
+                slides.forEach(slide => {
+                    slide.classList.remove('active');
+                });
+                
+                // Mostrar imagen actual
+                slides[index].classList.add('active');
+                
+                // Obtener datos de la imagen actual
+                const currentImage = slides[index];
+                const titleText = currentImage.getAttribute('data-text');
+                const buttonText = currentImage.getAttribute('data-button');
+                const buttonLink = currentImage.getAttribute('data-link');
+                
+                // Actualizar texto y botón
+                heroTitle.textContent = titleText;
+                heroButton.textContent = buttonText;
+                heroButton.href = buttonLink;
+                
+                // Actualizar índice actual
+                currentSlide = index;
+            }
+            
+            function nextSlide() {
+                const nextIndex = (currentSlide + 1) % slides.length;
+                showSlide(nextIndex);
+            }
+            
+            // Cambiar imagen cada 5 segundos
+            setInterval(nextSlide, 9000);
+            
+            // Inicializar con la primera imagen
+            showSlide(0);
+            
+            // PRELOADER
+            window.addEventListener('load', function() {
                 setTimeout(function() {
-                    preloader.style.display = 'none';
-                }, 500);
-            }, 1000);
+                    const preloader = document.getElementById('preloader-container');
+                    preloader.style.opacity = '0';
+                    preloader.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        preloader.style.display = 'none';
+                    }, 500);
+                }, 1000);
+            });
         });
+        
+        // Función para hacer scroll al contenido
+        function scrollToContent() {
+            const mainContent = document.querySelector('.main-content');
+            
+            window.scrollTo({
+                top: mainContent.offsetTop,
+                behavior: 'smooth'
+            });
+        }
     </script>
-</body>
 </body>
 
 </html>
